@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 import BookCreate from './Components/BookCreate';
@@ -6,15 +6,22 @@ import BookList from './Components/BookList';
 
 function App() {
   const [books, setBooks] = useState([]);
+  const LOCAL_API = 'http://localhost:3001/books/'
 
-  const fechBooks = async () => {
-    const response = await axios.get('http://localhost:3001/books');
+  const fetchBooks = async () => {
+    const response = await axios.get(LOCAL_API);
 
     setBooks(response.data);
   }
 
+  // Executes fetchBook() only on initial render when 
+  // an empty array is passed as the second argument
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
   const createBook = async (title) => {
-    const response = await axios.post('http://localhost:3001/books', {
+    const response = await axios.post(LOCAL_API, {
       title
     });
 
@@ -26,7 +33,9 @@ function App() {
     setBooks(updatedBooks);
   };
 
-  const deleteBookById = (id) => {
+  const deleteBookById = async (id) => {
+    await axios.delete(LOCAL_API + id);
+
     const updatedBooks = books.filter((book) => {
       return book.id !== id;
     });
@@ -34,10 +43,14 @@ function App() {
     setBooks(updatedBooks);
   };
 
-  const editBookById = (id, newTitle) => {
+  const editBookById = async (id, newTitle) => {
+    const response = await axios.put(LOCAL_API + id,{
+      title: newTitle
+    });
+
     const updatedBooks = books.map((book) => {
       if (book.id === id) {
-        return { ...book, title: newTitle }
+        return { ...book, ...response.data }
       }
       return book
     });
